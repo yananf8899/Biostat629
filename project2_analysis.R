@@ -821,3 +821,10 @@ cat("  fig2_cea_slope_boxplot.pdf\n")
 cat("  fig3_roc_curves.pdf\n")
 cat("  fig4_calibration.pdf\n")
 cat("  fig5_conformal_singletons.pdf\n")
+
+# ── Reproducibility footprint: capture R version + package versions ──────────
+# Writes a sessionInfo.txt that records exactly which package versions were
+# loaded for this run. Anyone re-running the script can compare against this
+# file to detect environment drift.
+capture.output(sessionInfo(), file = "sessionInfo.txt")
+cat("  sessionInfo.txt\n")

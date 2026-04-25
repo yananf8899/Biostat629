@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Longitudinal CEA Trajectories and CRC Progression — Project 2</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <a class="nav-brand" href="#">CEA Trajectories · CRC</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#methods">Methods</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#conformal">Conformal</a></li>
+      <li><a href="#team">Team</a></li>
+    </ul>
+  </nav>
+
+  <div class="hero">
+    <span class="tag">MSK-CHORD · 2026 · Biostat 629</span>
+    <h1>Longitudinal CEA Trajectories and Disease Progression Prediction in Colorectal Cancer</h1>
+    <p class="subtitle">
+      Using the MSK-CHORD 2024 release, we show that the 90-day slope and current level of
+      log(CEA) predict 180-day progression in colorectal cancer patients beyond standard
+      clinical variables (AUC 0.647 → 0.703, DeLong p &lt; 10<sup>−9</sup>), and we attach
+      distribution-free prediction sets via split-conformal inference.
+    </p>
+    <div class="hero-actions">
+      <a href="report.pdf" class="btn-primary">Read report (PDF)</a>
+      <a href="https://github.com/yananf8899/Biostat629" class="btn-outline" target="_blank">Code</a>
+      <a href="https://cbioportal.org" class="btn-outline" target="_blank">Data (cBioPortal)</a>
+    </div>
+  </div>
+
+  <main>
+
+    <section id="about">
+      <div class="container">
+        <h2>About</h2>
+        <p>
+          The MSK-CHORD 2024 release integrates structured clinical data, somatic mutation
+          calls, and longitudinal timeline events (labs, imaging, treatment, progression) for
+          roughly 25,000 patients across five cancer types. We focused on the colorectal
+          cancer subset (5,543 patients), which carries the richest longitudinal
+          <strong>carcinoembryonic antigen (CEA)</strong> data — a median of ~12 measurements
+          per patient.
+        </p>
+        <p>
+          <strong>Research question.</strong> Do longitudinal CEA trajectory features —
+          specifically the 90-day slope and within-patient variability — improve 180-day
+          disease progression prediction beyond standard clinical variables, and do genomic
+          covariates add further discriminative value on top of that?
+        </p>
+        <p>
+          We built a <strong>landmark prediction framework</strong>: each CEA measurement
+          defines a landmark time <em>t</em> (in days from CRC diagnosis), features are
+          constructed strictly using data available at or before <em>t</em>, and the outcome
+          is whether a progression assessment of "Y" occurs in the window
+          <em>(t, t+180]</em>.
+        </p>
+      </div>
+    </section>
+
+    <section id="methods">
+      <div class="container">
+        <h2>Methods</h2>
+
+        <p>
+          After filtering to patients with at least 3 CEA measurements, a computable
+          90-day slope at the landmark, and at least one assessable progression event in the
+          180-day window, the analytic cohort comprised <strong>3,950 patients</strong>
+          contributing <strong>68,272 landmarks</strong> (overall progression rate 57.4%).
+          Patients were split 70/30 at the patient level (seed 629).
+        </p>
+
+        <p>We fit three models:</p>
+        <ul>
+          <li>
+            <strong>Model 0 — Clinical-only GLMM.</strong> Mixed-effects logistic regression
+            with random patient intercept; covariates: time since diagnosis, treatment
+            class, age, sex, stage, MSI status, prior medication.
+          </li>
+          <li>
+            <strong>Model A — Clinical + CEA-trajectory GLMM.</strong> Adds current
+            log(CEA), 90-day CEA slope, and CEA coefficient-of-variation to Model 0.
+          </li>
+          <li>
+            <strong>Model B — Genomic LASSO.</strong> L<sub>1</sub>-penalized logistic
+            regression with Model A covariates plus TMB and binary indicators for the 10
+            most recurrently mutated CRC genes (<em>APC, TP53, KRAS, PIK3CA, FBXW7, SMAD4,
+            TCF7L2, ARID1A, SOX9, BRAF</em>). λ tuned by patient-level 5-fold CV.
+          </li>
+        </ul>
+
+        <p>
+          Discrimination (AUC), calibration slope on the logit scale, and Brier score were
+          reported on the held-out test set using one eligible landmark per patient to
+          preserve independence. We compared AUCs with the DeLong test. Split-conformal
+          inference gave finite-sample 90% prediction sets for the binary outcome.
+        </p>
+      </div>
+    </section>
+
+    <section id="results">
+      <div class="container">
+        <h2>Key Findings</h2>
+
+        <ul>
+          <li>
+            Adding CEA-trajectory features to clinical covariates raises test AUC from
+            <strong>0.647 → 0.703</strong> (DeLong <em>p</em> = 3.6 × 10<sup>−10</sup>).
+          </li>
+          <li>
+            The 90-day log-CEA slope is the single strongest predictor; on the clinically
+            meaningful scale of +0.01 log-CEA/day it corresponds to
+            OR ≈ 1.26.
+          </li>
+          <li>
+            Adding TMB and the 10 top mutated genes via LASSO does not move AUC
+            (0.703 on the shared subset, DeLong <em>p</em> = 0.98) but modestly improves
+            the calibration slope (0.52 → 0.64).
+          </li>
+          <li>
+            Split-conformal prediction achieves 90.1% empirical coverage; 34.7% of test
+            patients receive a singleton set, concentrated at the extremes of predicted
+            risk.
+          </li>
+        </ul>
+
+        <div class="fig-grid">
+
+          <figure>
+            <p class="fig-finding">
+              Progressors show higher and rising log-CEA over time; non-progressors remain flat.
+            </p>
+            <img src="figures/fig1.png" alt="Individual CEA trajectories colored by progression status">
+            <figcaption>
+              <strong>Figure 1.</strong> Individual log(CEA) trajectories for 25 progressors
+              (red) and 25 non-progressors (green), plotted against time from diagnosis
+              (years).
+            </figcaption>
+          </figure>
+
+          <figure>
+            <p class="fig-finding">
+              The 90-day CEA slope distribution is shifted upward in landmarks followed by progression.
+            </p>
+            <img src="figures/fig2.png" alt="Boxplot of 90-day CEA slope by progression status">
+            <figcaption>
+              <strong>Figure 2.</strong> Distribution of 90-day log-CEA slope by outcome;
+              whiskers clipped at the 1st and 99th percentiles for readability.
+            </figcaption>
+          </figure>
+
+          <figure>
+            <p class="fig-finding">
+              CEA-trajectory features give a clear discriminative gain over clinical-only.
+            </p>
+            <img src="figures/fig3.png" alt="ROC curves: Model 0 vs Model A">
+            <figcaption>
+              <strong>Figure 3.</strong> ROC curves on the test set (one landmark per
+              patient). Model 0 AUC = 0.647, Model A AUC = 0.703.
+            </figcaption>
+          </figure>
+
+          <figure>
+            <p class="fig-finding">
+              Model A is well-ranked but systematically overconfident at the extremes.
+            </p>
+            <img src="figures/fig4.png" alt="Calibration plot for Model A">
+            <figcaption>
+              <strong>Figure 4.</strong> Calibration plot for Model A on the test set.
+              Points are deciles of predicted probability; calibration slope = 0.52.
+            </figcaption>
+          </figure>
+
+        </div>
+      </div>
+    </section>
+
+    <section id="conformal">
+      <div class="container">
+        <h2>Conformal Prediction Sets</h2>
+        <p>
+          Using a calibration split from the training set (one landmark per patient for
+          exchangeability), we compute nonconformity scores
+          <em>s</em> = 1 − <em>p̂</em>(true class) and threshold at the
+          (1−α)-conformal quantile (α = 0.10).
+        </p>
+        <p>
+          On the test set, empirical coverage is <strong>90.1%</strong> (target ≥ 90%).
+          34.7% of patients receive a singleton set {0} or {1}; the remainder receive the
+          ambiguous set {0, 1}. Informativeness is U-shaped in predicted risk — the model
+          is nearly always decisive at the extremes and abstains in the middle, which is
+          clinically the right behavior.
+        </p>
+
+        <div class="fig-grid">
+          <figure>
+            <p class="fig-finding">
+              Singleton coverage peaks at the extremes of predicted risk.
+            </p>
+            <img src="figures/fig5.png" alt="Singleton fraction by predicted risk decile">
+            <figcaption>
+              <strong>Figure 5.</strong> Fraction of singleton conformal prediction sets by
+              predicted risk decile on the test set.
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="team">
+      <div class="container">
+        <h2>Team</h2>
+        <ul>
+          <li>Yanan Fang · University of Michigan, Biostatistics</li>
+          <li>Biostat 629 — Case Studies in Health Big Data, April 2026</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>
+      Patient-level MSK-CHORD data are available through
+      <a href="https://cbioportal.org">cBioPortal</a> under controlled access.
+      Analysis code is freely available.
+    </p>
+    <p>
+      Questions? <a href="mailto:yananf@umich.edu">yananf@umich.edu</a>
+    </p>
+  </footer>
+
+</body>
+</html>
