@@ -1,4 +1,4 @@
-# Project 2 — Longitudinal CEA Trajectories and CRC Disease Progression
+# Project  — Longitudinal CEA Trajectories and CRC Disease Progression
 
 Biostat 629, Winter 2026 — Yanan Fang.
 
