@@ -77,17 +77,6 @@ regenerates exactly.
 pdflatex project2_report.tex
 ```
 
-### 4. (Optional) Build the website locally
-
-```bash
-cd docs
-python3 -m http.server 8000
-# open http://localhost:8000
-```
-
-Pushing the project to GitHub and enabling Pages with **Branch = main /
-Folder = /docs** publishes the page at
-<https://yananf8899.github.io/Biostat629/>.
 
 ## Reproducibility notes
 
